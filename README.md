@@ -44,7 +44,7 @@ It features a unique **"Burst Mode"** with temporal voting to eliminate OCR flic
 ├── en_dict.txt                 # Character dictionary for PaddleOCR
 ├── requirements.txt            # Python dependencies
 └── README.md                   # Documentation
-
+```
 ⚙️ Installation
 Clone the Repository
 
@@ -111,3 +111,4 @@ Create a feature branch (git checkout -b feature/NewFeature).
 Commit your changes.
 
 Push to the branch and open a Pull Request.
+
