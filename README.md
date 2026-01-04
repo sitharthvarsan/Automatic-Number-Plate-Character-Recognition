@@ -1,266 +1,113 @@
-# 🚘 Automatic Number Plate Recognition (ANPR) System
+# 🇮🇳 Indian License Plate Recognition (YOLOv8 + Fine-Tuned PaddleOCR)
 
-**YOLOv8 + EasyOCR | Indian Number Plate Focus**
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![YOLOv8](https://img.shields.io/badge/Detection-YOLOv8n-green)
+![PaddleOCR](https://img.shields.io/badge/Recognition-PaddleOCR%20(Fine--Tuned)-orange)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 
----
+An end-to-end **Automatic Number Plate Recognition (ANPR)** system optimized for Indian vehicles. This project integrates **YOLOv8 Nano** for real-time plate detection and a **Fine-Tuned PaddleOCR** model (SVTR_LCNet) for high-accuracy text recognition.
 
-## 📌 Project Overview
-
-This project implements a **real-time Automatic Number Plate Recognition (ANPR) system** designed specifically for **Indian vehicle number plates**.
-
-The pipeline combines:
-
-* **YOLOv8 (Nano)** for accurate and fast number plate detection
-* **EasyOCR** for text recognition
-* **Strict post-processing rules** based on Indian vehicle registration formats
-
-The system supports:
-
-* Image-based inference
-* Webcam-based live capture
-* Quantitative OCR evaluation against ground-truth data
+It features a unique **"Burst Mode"** with temporal voting to eliminate OCR flickering and applies strict **Indian Syntax Constraints** to correct common OCR errors (e.g., misreading 'O' as 'D' or '8' as 'B').
 
 ---
 
-## 🧠 High-Level Pipeline
+## 🚀 Key Features
 
-```
-Input Image / Webcam Frame
-        ↓
-YOLOv8 Number Plate Detection
-        ↓
-Plate Cropping
-        ↓
-Image Preprocessing (OCR-focused)
-        ↓
-EasyOCR Text Recognition
-        ↓
-Strict Indian Plate Post-Processing
-        ↓
-Final Plate Output / Evaluation Metrics
-```
+* **🏎️ Real-Time Detection:** Uses `YOLOv8-Nano`, the lightest and fastest model, achieving real-time performance on CPU.
+* **🧠 Fine-Tuned OCR:** Custom-trained **PaddleOCR (SVTR_LCNet)** model on Indian license plate datasets, significantly outperforming generic OCR models on Indian fonts.
+* **📸 Burst Mode (Temporal Voting):** Captures **15 consecutive frames** and performs statistical voting to stabilize character predictions.
+* **🇮🇳 Indian Format Logic:** Auto-corrects characters based on the standard format `AA 00 AA 0000`:
+    * *State Code (First 2 chars)* → Forced to be Letters (e.g., `8G` → `MH`).
+    * *District Code (Next 2 chars)* → Forced to be Digits (e.g., `O1` → `01`).
 
 ---
 
-## 🧩 Pipeline Breakdown
+## 🛠️ Tech Stack
 
-### 1️⃣ Input Source
-
-* Static car images
-* Live webcam feed
-
-Supported formats:
-
-* `.jpg`, `.jpeg`, `.png`
-* Webcam (OpenCV)
+* **Detection:** [Ultralytics YOLOv8 (Nano)](https://github.com/ultralytics/ultralytics)
+* **Recognition:** [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) (Fine-Tuned on Colab)
+* **Processing:** OpenCV, NumPy
+* **Language:** Python 3.10+
 
 ---
 
-### 2️⃣ Number Plate Detection (YOLOv8)
+## 📂 Project Structure
 
-* Model: **YOLOv8-nano**
-* Task: Object detection (single class → `number_plate`)
-* Trained on annotated Indian vehicle images
-
-**Why YOLOv8-nano?**
-
-* Lightweight
-* Fast on CPU
-* Sufficient accuracy for plate localization
-
-**Output:**
-
-* Bounding box coordinates of detected number plates
-
----
-
-### 3️⃣ Plate Cropping
-
-* Extracts the detected bounding box region from the image/frame
-* Only the **plate region** is forwarded to OCR
-
-This reduces noise and improves recognition accuracy.
-
----
-
-### 4️⃣ Image Preprocessing for OCR
-
-Applied only on the cropped plate region:
-
-* Grayscale conversion
-* Upscaling (2× using bicubic interpolation)
-* Bilateral filtering (noise reduction while preserving edges)
-* Histogram equalization (contrast enhancement)
-
-**Purpose:**
-Improve character clarity for OCR models.
-
----
-
-### 5️⃣ Optical Character Recognition (EasyOCR)
-
-* OCR Engine: **EasyOCR**
-* Language: English (`en`)
-* CPU-based inference
-
-**Why EasyOCR?**
-
-* Robust on distorted text
-* Works well on number plates
-* Easy integration
-
-OCR returns:
-
-* Detected text
-* Confidence score
-
-The highest-confidence result is selected.
-
----
-
-### 6️⃣ Strict Indian Number Plate Post-Processing
-
-This is the **core intelligence** of the system.
-
-#### Enforced Format
-
-```
-AA00AA0000
-││││││││││
-│││││││└── Vehicle number (4 digits)
-││││└──── Series letters (2 letters)
-││└────── District code (2 digits)
-└──────── State code (2 letters)
-```
-
-#### Key Features
-
-* **State code validation** against all Indian states & UTs
-* **Character-level OCR correction** (e.g., O↔0, I↔1, Z↔2)
-* **State correction via candidate generation**, not hardcoding
-* **Strict rejection** of invalid patterns
-
-If the OCR result cannot be corrected into a valid Indian plate:
-➡️ It is **rejected**, not force-fitted.
-
----
-
-### 7️⃣ Final Output
-
-* **Live webcam mode**
-
-  * Press `C` to capture
-  * OCR runs once
-  * Final plate displayed on screen & terminal
-
-* **Image mode**
-
-  * Plate detection + recognition
-  * Output image with bounding box & recognized plate
-
----
-
-## 📊 OCR Evaluation Pipeline (`eval_ocr.py`)
-
-Used for **quantitative evaluation** against ground-truth data.
-
-### Evaluation Steps
-
-1. Read validation images
-2. Detect plate using YOLOv8
-3. Run OCR + strict post-processing
-4. Compare with ground truth CSV
-
-### Metrics
-
-* **Character Accuracy (%)**
-* **Full Plate Accuracy (%)**
-
-Rejected or undetected plates are **excluded** from unfair scoring.
-
----
-
-## 📁 Project Structure
-
-```
-ANPR_YOLOv8/
-│
-├── data/
-│   ├── images/
-│   │   ├── train/
-│   │   ├── val/
-│   │   └── test/
-│   ├── labels/
-│   └── metadata/
-│       └── Ground_Truth.csv
-│
+```text
+.
+├── inference/                  # Fine-tuned PaddleOCR weights
+│   ├── inference.pdmodel       # Model architecture
+│   └── inference.pdiparams     # Learned weights
+├── runs/detect/train/weights/  # Trained YOLOv8 model (best.pt)
 ├── scripts/
-│   ├── train_yolo.py
-│   ├── infer_anpr.py
-│   ├── eval_detection.py
-│   └── eval_ocr.py
-│
-├── requirements.txt
-└── README.md
-```
+│   └── infer_anpr.py           # Main inference script
+├── en_dict.txt                 # Character dictionary for PaddleOCR
+├── requirements.txt            # Python dependencies
+└── README.md                   # Documentation
 
----
+⚙️ Installation
+Clone the Repository
 
-## ⚙️ How to Run
+Bash
 
-### 1️⃣ Install Dependencies
+git clone [https://github.com/sitharthvarsan/Automatic-Number-Plate-Character-Recognition.git](https://github.com/sitharthvarsan/Automatic-Number-Plate-Character-Recognition.git)
+cd Automatic-Number-Plate-Character-Recognition
+Install Dependencies
 
-```bash
+Bash
+
 pip install -r requirements.txt
-```
+(Manual Install):
 
-### 2️⃣ Train YOLOv8
+Bash
 
-```bash
-python scripts/train_yolo.py
-```
+pip install ultralytics paddlepaddle paddleocr opencv-python numpy
+🏃‍♂️ Usage
+1. Run the Inference Script
+This script launches your webcam and waits for the trigger command.
 
-### 3️⃣ Run Live ANPR (Webcam)
+Bash
 
-```bash
 python scripts/infer_anpr.py
-```
+2. Controls
+C: Trigger Burst Capture. The system will:
 
-### 4️⃣ Evaluate OCR Accuracy
+Snap 15 rapid frames.
 
-```bash
-python scripts/eval_ocr.py
-```
+Detect plates in all frames.
 
----
+Run Fine-Tuned PaddleOCR on each crop.
 
-## ✅ Key Design Strengths
+Vote for the best text result.
 
-* ✔ Real-time capable (CPU)
-* ✔ Strict domain-aware validation
-* ✔ No hardcoded state assumptions
-* ✔ Scalable to all Indian plates
-* ✔ Production-style rejection logic
-* ✔ Clean evaluation methodology
+Q: Quit the application.
 
----
+📊 Training Details
+Phase 1: Detection (YOLOv8)
+Model: YOLOv8 Nano (yolov8n.pt).
 
-## 🚀 Future Improvements
+Dataset: Indian License Plates (Roboflow).
 
-* Multi-frame OCR voting (temporal smoothing)
-* Night-time enhancement
-* Motion blur handling
-* GPU acceleration
-* Deployment as REST API / Edge device
+Epochs: 50.
 
----
+Result: High-speed localization of plate coordinates.
 
-## 📌 Final Note
+Phase 2: Recognition (PaddleOCR)
+Architecture: SVTR_LCNet (PP-OCRv3/v4).
 
-This project goes beyond basic ANPR demos by focusing on:
+Fine-Tuning: Trained on Google Colab using a custom Indian font dataset.
 
-* **Domain correctness**
-* **Robust post-processing**
-* **Realistic evaluation**
+Dictionary: Alphanumeric (0-9, A-Z).
 
+Optimization: Exported to inference model for lightweight deployment.
 
+🤝 Contributing
+Contributions are welcome!
+
+Fork the repo.
+
+Create a feature branch (git checkout -b feature/NewFeature).
+
+Commit your changes.
+
+Push to the branch and open a Pull Request.
