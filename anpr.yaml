@@ -1,0 +1,9 @@
+path: C:/Users/HP/OneDrive/Desktop/SITHARTH SNU/Project/ANPR_YOLOv8
+
+train: data/images/train
+val: data/images/val
+test: data/images/test
+
+nc: 1
+names:
+  - number_plate

@@ -1,0 +1,14 @@
+# Core ML / CV
+ultralytics==8.1.0
+opencv-python
+
+# OCR
+paddleocr
+paddlepaddle
+
+# Data handling
+numpy
+pandas
+
+# Utilities
+tqdm
